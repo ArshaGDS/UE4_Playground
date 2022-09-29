@@ -4,6 +4,14 @@
 #include "PC_Default.h"
 
 #include "GameFramework/Character.h"
+#include "DrawDebugHelpers.h"
+
+void APC_Default::BeginPlay()
+{
+	Super::BeginPlay();
+	// Bind ResetKeyPressedCount function to reset KeyPressedCount to zero after specific time
+	TimerDelegate.BindUObject(this, &APC_Default::ResetKeyPressedCount);
+}
 
 // Interface
 void APC_Default::GetPlayerInputComponent_Implementation(ACharacter* PlayerCharacter,
@@ -15,6 +23,7 @@ void APC_Default::GetPlayerInputComponent_Implementation(ACharacter* PlayerChara
 	PlayerCharacterPtr = PlayerCharacter;
 	
 	SetupInputAxis(PlayerInputComponent);
+	SetupInputActions(PlayerInputComponent);
 }
 
 void APC_Default::SetupInputAxis(UInputComponent* PlayerInputComponent)
@@ -25,11 +34,80 @@ void APC_Default::SetupInputAxis(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAxis("LookUp", this, &APC_Default::LookUp);
 }
 
+void APC_Default::SetupInputActions(UInputComponent* PlayerInputComponent)
+{
+	PlayerInputComponent->BindAction("FastMovement", IE_Released, this, &APC_Default::ReleasedW);
+}
+
 void APC_Default::MoveForward(float AxisValue)
 {
 	if (AxisValue != 0)
 	{
 		PlayerCharacterPtr->AddMovementInput(PlayerCharacterPtr->GetActorForwardVector() * AxisValue);
+	}
+}
+
+void APC_Default::ReleasedW()
+{
+	// Calculates double taps on the w key in a specified time
+	if (KeyPressedCount < 2)
+	{
+		KeyPressedCount++;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 0.2f, false);
+	}
+	if (KeyPressedCount == 2)
+	{
+		ResetKeyPressedCount();
+		FastMovement();
+	}
+}
+
+void APC_Default::ResetKeyPressedCount()
+{
+	KeyPressedCount = 0;
+}
+
+void APC_Default::FastMovement()
+{
+	FVector ViewPointLocation;
+	FRotator ViewPointRotation;
+	PlayerCharacterPtr->Controller->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
+	const FVector EndLocation = ViewPointLocation + ViewPointRotation.Vector() * LineTraceLength;
+	if(bIsDebugging)
+	{
+		DrawDebugLine(
+		   GetWorld(),
+		   ViewPointLocation,
+		   EndLocation,
+		   FColor::Red,
+		   false,
+		   2.f,
+		   2.f,
+		   4
+	   );
+	}
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(PlayerCharacterPtr);
+	FHitResult Hit;
+	const bool bSuccess = GetWorld()->LineTraceSingleByChannel(
+		Hit, ViewPointLocation, EndLocation, CollisionChannel, QueryParams);
+	if (bSuccess && Hit.Actor.IsValid())
+	{
+		if(bIsDebugging)
+		{
+			DrawDebugSphere(
+			   GetWorld(),
+			   Hit.Location,
+			   15.f,
+			   10.f,
+			   FColor::Red,
+			   false,
+			   2.f,
+			   2.f
+			   );
+		}
+
+		PlayerCharacterPtr->SetActorLocation(Hit.Location);
 	}
 }
 
