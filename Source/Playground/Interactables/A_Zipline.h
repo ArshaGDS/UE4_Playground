@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/SplineMeshComponent.h"
 #include "A_Zipline.generated.h"
 
 UENUM()
@@ -27,21 +28,30 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Zipline")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Zipline | Movement")
 	float Speed{100};
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Zipline")
-	class USplineComponent* Spline;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Zipline")
-	UBoxComponent* StartZipline;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Zipline")
-	UBoxComponent* EndZipline;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Zipline")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Zipline | Movement")
 	EZiplineDirection ZiplineDirection;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Zipline | Movement")
+	float ZAxisOffset{0.f};
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Zipline | Collisions")
+	FVector BoxExtent{32, 32, 32};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Zipline | Collisions")
+	bool bHiddenInGame{true};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Zipline | Collisions")
+	bool bSetSplineToTopOfCollisions{false};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Zipline | SplineMesh")
+	UStaticMesh* SplineMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Zipline | SplineMesh")
+	TEnumAsByte<ESplineMeshAxis::Type> ForwardAxis;
+
 private:
 	
 	float Distance{};
@@ -55,6 +65,15 @@ private:
 	// When player is using zipline, returns true
 	UPROPERTY()
 	bool bIsActive{false};
+
+	UPROPERTY()
+	class USplineComponent* Spline;
+	
+	UPROPERTY()
+	UBoxComponent* StartZipline;
+
+	UPROPERTY()
+	UBoxComponent* EndZipline;
 	
 	UFUNCTION()
 	void Move(float DeltaTime);

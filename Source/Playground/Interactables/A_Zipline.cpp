@@ -38,9 +38,55 @@ void AA_Zipline::BeginPlay()
 void AA_Zipline::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
+
+	if (SplineMesh != nullptr)
+	{
+		for (int SplineIndex{}; SplineIndex <= LastSplinePointIndex(); SplineIndex++)
+		{
+			USplineMeshComponent* SplineMeshComponent = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
+			SplineMeshComponent->SetStaticMesh(SplineMesh);
+			SplineMeshComponent->SetMobility(EComponentMobility::Movable);
+			SplineMeshComponent->CreationMethod = EComponentCreationMethod::UserConstructionScript;
+			SplineMeshComponent->RegisterComponentWithWorld(GetWorld());
+			SplineMeshComponent->AttachToComponent(Spline, FAttachmentTransformRules::KeepRelativeTransform);
+
+			const FVector StartPoint = Spline->GetLocationAtSplinePoint(SplineIndex, ESplineCoordinateSpace::Local);
+			const FVector StartTangent = Spline->GetTangentAtSplinePoint(SplineIndex, ESplineCoordinateSpace::Local);
+			const FVector EndPoint = Spline->GetLocationAtSplinePoint(SplineIndex + 1, ESplineCoordinateSpace::Local);
+			const FVector EndTangent = Spline->GetTangentAtSplinePoint(SplineIndex + 1, ESplineCoordinateSpace::Local);
+
+			SplineMeshComponent->SetStartAndEnd(StartPoint, StartTangent, EndPoint, EndTangent, true);
+			SplineMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			SplineMeshComponent->SetForwardAxis(ForwardAxis);
+		}
+	}
 	
-	StartZipline->SetWorldLocation(Spline->GetWorldLocationAtSplinePoint(0));
-	EndZipline->SetWorldLocation(Spline->GetWorldLocationAtSplinePoint(LastSplinePointIndex()));
+	StartZipline->SetBoxExtent(BoxExtent);
+	EndZipline->SetBoxExtent(BoxExtent);
+
+	StartZipline->SetHiddenInGame(bHiddenInGame);
+	EndZipline->SetHiddenInGame(bHiddenInGame);
+	
+	StartZipline->SetWorldLocation(
+		bSetSplineToTopOfCollisions ?
+		FVector {
+			Spline->GetWorldLocationAtSplinePoint(0).X,
+			Spline->GetWorldLocationAtSplinePoint(0).Y,
+			Spline->GetWorldLocationAtSplinePoint(0).Z - StartZipline->GetScaledBoxExtent().Z
+		} :
+		Spline->GetWorldLocationAtSplinePoint(0)
+	);
+	
+	EndZipline->SetWorldLocation(
+		bSetSplineToTopOfCollisions ?
+		FVector {
+			Spline->GetWorldLocationAtSplinePoint(LastSplinePointIndex()).X,
+			Spline->GetWorldLocationAtSplinePoint(LastSplinePointIndex()).Y,
+			Spline->GetWorldLocationAtSplinePoint(LastSplinePointIndex()).Z - EndZipline->GetScaledBoxExtent().Z
+		} :
+		Spline->GetWorldLocationAtSplinePoint(LastSplinePointIndex())
+	);
+	
 }
 
 // Called every frame
@@ -72,8 +118,13 @@ void AA_Zipline::MoveFromStartToEnd(const float DeltaTime)
 		return;
 	}
 	Distance = (DeltaTime * Speed) + Distance;
-	const FTransform NewTransform = Spline->GetTransformAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World, false);
-	OverlappedActorPtr->SetActorTransform(NewTransform);
+	OverlappedActorPtr->SetActorLocation(
+		FVector {
+			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).X,
+			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).Y,
+			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).Z + ZAxisOffset,
+		}
+	);
 	//UE_LOG(LogTemp, Display, TEXT("Distance: %f\tLenght: %f\tSpeed: %f\tDelta Time: %f"), Distance, Spline->GetSplineLength(), Speed, DeltaTime);
 }
 
@@ -87,8 +138,14 @@ void AA_Zipline::MoveFromEndToStart(const float DeltaTime)
 		bIsActive = false;
 		return;
 	}
-	const FTransform NewTransform = Spline->GetTransformAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World, false);
-	OverlappedActorPtr->SetActorTransform(NewTransform);
+	
+	OverlappedActorPtr->SetActorLocation(
+		FVector {
+			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).X,
+			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).Y,
+			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).Z + ZAxisOffset,
+		}
+	);
 	//UE_LOG(LogTemp, Display, TEXT("Distance: %f\tLenght: %f\tSpeed: %f\tDelta Time: %f"), Distance, Spline->GetSplineLength(), Speed, DeltaTime);
 }
 
