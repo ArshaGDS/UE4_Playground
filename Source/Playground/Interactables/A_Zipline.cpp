@@ -23,10 +23,17 @@ AA_Zipline::AA_Zipline()
 void AA_Zipline::BeginPlay()
 {
 	Super::BeginPlay();
-	StartZipline->OnComponentBeginOverlap.AddDynamic(this, &AA_Zipline::StartZiplineOverlapBegin);
-	EndZipline->OnComponentBeginOverlap.AddDynamic(this, &AA_Zipline::EndZiplineOverlapBegin);
+	
 	SetActorTickEnabled(false);
-}
+	StartZipline->OnComponentBeginOverlap.AddDynamic(this, &AA_Zipline::StartZiplineOverlapBegin);
+	if (ZiplineDirection == EZiplineDirection::OneWay)
+	{
+		EndZipline->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		return;
+	}
+	// Overlap is set when the zipline is two-way
+	EndZipline->OnComponentBeginOverlap.AddDynamic(this, &AA_Zipline::EndZiplineOverlapBegin);
+}	
 
 void AA_Zipline::OnConstruction(const FTransform& Transform)
 {
@@ -56,9 +63,8 @@ void AA_Zipline::Move(float DeltaTime)
 	}
 }
 
-void AA_Zipline::MoveFromStartToEnd(float DeltaTime)
+void AA_Zipline::MoveFromStartToEnd(const float DeltaTime)
 {
-	// Copy of right code
 	if (Distance > Spline->GetSplineLength())
 	{
 		SetActorTickEnabled(false);
@@ -68,13 +74,13 @@ void AA_Zipline::MoveFromStartToEnd(float DeltaTime)
 	Distance = (DeltaTime * Speed) + Distance;
 	const FTransform NewTransform = Spline->GetTransformAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World, false);
 	OverlappedActorPtr->SetActorTransform(NewTransform);
-	UE_LOG(LogTemp, Display, TEXT("Distance: %f\tLenght: %f\tSpeed: %f\tDelta Time: %f"), Distance, Spline->GetSplineLength(), Speed, DeltaTime);
+	//UE_LOG(LogTemp, Display, TEXT("Distance: %f\tLenght: %f\tSpeed: %f\tDelta Time: %f"), Distance, Spline->GetSplineLength(), Speed, DeltaTime);
 }
 
-void AA_Zipline::MoveFromEndToStart(float DeltaTime)
+void AA_Zipline::MoveFromEndToStart(const float DeltaTime)
 {
-	Distance = (Distance - (Speed * DeltaTime));
-	UE_LOG(LogTemp, Display, TEXT("Distance: %f\tLenght: %f"), Distance, Spline->GetSplineLength());
+	Distance = Distance - (Speed * DeltaTime);
+	//UE_LOG(LogTemp, Display, TEXT("Distance: %f\tLenght: %f"), Distance, Spline->GetSplineLength());
 	if (Distance <= 0)
 	{
 		SetActorTickEnabled(false);
@@ -86,14 +92,14 @@ void AA_Zipline::MoveFromEndToStart(float DeltaTime)
 	//UE_LOG(LogTemp, Display, TEXT("Distance: %f\tLenght: %f\tSpeed: %f\tDelta Time: %f"), Distance, Spline->GetSplineLength(), Speed, DeltaTime);
 }
 
-int AA_Zipline::LastSplinePointIndex() 
+int AA_Zipline::LastSplinePointIndex() const
 {
 	return Spline->GetNumberOfSplinePoints() - 1;
 }
 
 
 void AA_Zipline::StartZiplineOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-                                          UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && IsValid(OtherActor) && !bIsActive)
 	{

@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "A_Zipline.generated.h"
 
+UENUM()
+enum class EZiplineDirection { OneWay, TwoWay };
+
 class UBoxComponent;
 UCLASS()
 class PLAYGROUND_API AA_Zipline : public AActor
@@ -30,12 +33,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Zipline")
 	class USplineComponent* Spline;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Zipline")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Zipline")
 	UBoxComponent* StartZipline;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Zipline")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Zipline")
 	UBoxComponent* EndZipline;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Zipline")
+	EZiplineDirection ZiplineDirection;
+	
 private:
 	
 	float Distance{};
@@ -46,6 +52,7 @@ private:
 	UPROPERTY()
 	bool bIsStartToEnd{false};
 
+	// When player is using zipline, returns true
 	UPROPERTY()
 	bool bIsActive{false};
 	
@@ -53,13 +60,13 @@ private:
 	void Move(float DeltaTime);
 
 	UFUNCTION()
-	void MoveFromStartToEnd(float DeltaTime);
+	void MoveFromStartToEnd(const float DeltaTime);
 
 	UFUNCTION()
-	void MoveFromEndToStart(float DeltaTime);
+	void MoveFromEndToStart(const float DeltaTime);
 
 	UFUNCTION()
-	int LastSplinePointIndex();
+	int LastSplinePointIndex() const;
 	
 	UFUNCTION()
 	void StartZiplineOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
