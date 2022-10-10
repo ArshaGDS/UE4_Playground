@@ -47,7 +47,7 @@ public:
 	bool bSetSplineToTopOfCollisions{false};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Zipline | SplineMesh")
-	UStaticMesh* SplineMesh;
+	UStaticMesh* SplineMesh{nullptr};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Zipline | SplineMesh")
 	TEnumAsByte<ESplineMeshAxis::Type> ForwardAxis;
@@ -86,6 +86,9 @@ private:
 
 	UFUNCTION()
 	int LastSplinePointIndex() const;
+
+	UFUNCTION()
+	void CreateNewSplineMesh(const uint8 SplineIndex);
 	
 	UFUNCTION()
 	void StartZiplineOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

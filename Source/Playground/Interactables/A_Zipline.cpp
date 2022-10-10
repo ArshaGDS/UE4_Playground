@@ -31,7 +31,7 @@ void AA_Zipline::BeginPlay()
 		EndZipline->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		return;
 	}
-	// Overlap is set when the zipline is two-way
+	// EndZipline overlap is set when the zipline is two-way
 	EndZipline->OnComponentBeginOverlap.AddDynamic(this, &AA_Zipline::EndZiplineOverlapBegin);
 }	
 
@@ -41,29 +41,15 @@ void AA_Zipline::OnConstruction(const FTransform& Transform)
 
 	if (SplineMesh != nullptr)
 	{
-		for (int SplineIndex{}; SplineIndex <= LastSplinePointIndex(); SplineIndex++)
+		for (uint8 SplineIndex{}; SplineIndex <= LastSplinePointIndex(); SplineIndex++)
 		{
-			USplineMeshComponent* SplineMeshComponent = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
-			SplineMeshComponent->SetStaticMesh(SplineMesh);
-			SplineMeshComponent->SetMobility(EComponentMobility::Movable);
-			SplineMeshComponent->CreationMethod = EComponentCreationMethod::UserConstructionScript;
-			SplineMeshComponent->RegisterComponentWithWorld(GetWorld());
-			SplineMeshComponent->AttachToComponent(Spline, FAttachmentTransformRules::KeepRelativeTransform);
-
-			const FVector StartPoint = Spline->GetLocationAtSplinePoint(SplineIndex, ESplineCoordinateSpace::Local);
-			const FVector StartTangent = Spline->GetTangentAtSplinePoint(SplineIndex, ESplineCoordinateSpace::Local);
-			const FVector EndPoint = Spline->GetLocationAtSplinePoint(SplineIndex + 1, ESplineCoordinateSpace::Local);
-			const FVector EndTangent = Spline->GetTangentAtSplinePoint(SplineIndex + 1, ESplineCoordinateSpace::Local);
-
-			SplineMeshComponent->SetStartAndEnd(StartPoint, StartTangent, EndPoint, EndTangent, true);
-			SplineMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-			SplineMeshComponent->SetForwardAxis(ForwardAxis);
+			CreateNewSplineMesh(SplineIndex);
 		}
 	}
 	
 	StartZipline->SetBoxExtent(BoxExtent);
 	EndZipline->SetBoxExtent(BoxExtent);
-
+	
 	StartZipline->SetHiddenInGame(bHiddenInGame);
 	EndZipline->SetHiddenInGame(bHiddenInGame);
 	
@@ -118,13 +104,9 @@ void AA_Zipline::MoveFromStartToEnd(const float DeltaTime)
 		return;
 	}
 	Distance = (DeltaTime * Speed) + Distance;
-	OverlappedActorPtr->SetActorLocation(
-		FVector {
-			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).X,
-			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).Y,
-			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).Z + ZAxisOffset,
-		}
-	);
+	FVector NewActorLocation = Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+	NewActorLocation.Z += ZAxisOffset;
+	OverlappedActorPtr->SetActorLocation(NewActorLocation);
 	//UE_LOG(LogTemp, Display, TEXT("Distance: %f\tLenght: %f\tSpeed: %f\tDelta Time: %f"), Distance, Spline->GetSplineLength(), Speed, DeltaTime);
 }
 
@@ -139,13 +121,9 @@ void AA_Zipline::MoveFromEndToStart(const float DeltaTime)
 		return;
 	}
 	
-	OverlappedActorPtr->SetActorLocation(
-		FVector {
-			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).X,
-			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).Y,
-			Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World).Z + ZAxisOffset,
-		}
-	);
+	FVector NewActorLocation = Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+	NewActorLocation.Z += ZAxisOffset;
+	OverlappedActorPtr->SetActorLocation(NewActorLocation);
 	//UE_LOG(LogTemp, Display, TEXT("Distance: %f\tLenght: %f\tSpeed: %f\tDelta Time: %f"), Distance, Spline->GetSplineLength(), Speed, DeltaTime);
 }
 
@@ -154,9 +132,28 @@ int AA_Zipline::LastSplinePointIndex() const
 	return Spline->GetNumberOfSplinePoints() - 1;
 }
 
+void AA_Zipline::CreateNewSplineMesh(const uint8 SplineIndex)
+{
+	USplineMeshComponent* SplineMeshComponent = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
+	SplineMeshComponent->SetStaticMesh(SplineMesh);
+	SplineMeshComponent->SetMobility(EComponentMobility::Movable);
+	SplineMeshComponent->CreationMethod = EComponentCreationMethod::UserConstructionScript;
+	SplineMeshComponent->RegisterComponentWithWorld(GetWorld());
+	SplineMeshComponent->AttachToComponent(Spline, FAttachmentTransformRules::KeepRelativeTransform);
+
+	const FVector StartPoint = Spline->GetLocationAtSplinePoint(SplineIndex, ESplineCoordinateSpace::Local);
+	const FVector StartTangent = Spline->GetTangentAtSplinePoint(SplineIndex, ESplineCoordinateSpace::Local);
+	const FVector EndPoint = Spline->GetLocationAtSplinePoint(SplineIndex + 1, ESplineCoordinateSpace::Local);
+	const FVector EndTangent = Spline->GetTangentAtSplinePoint(SplineIndex + 1, ESplineCoordinateSpace::Local);
+
+	SplineMeshComponent->SetStartAndEnd(StartPoint, StartTangent, EndPoint, EndTangent, true);
+	SplineMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SplineMeshComponent->SetForwardAxis(ForwardAxis);
+}
+
 
 void AA_Zipline::StartZiplineOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                                          UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && IsValid(OtherActor) && !bIsActive)
 	{
