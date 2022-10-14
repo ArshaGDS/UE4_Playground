@@ -5,6 +5,7 @@
 
 #include "GameFramework/Character.h"
 #include "DrawDebugHelpers.h"
+#include "I_PlayerInputInterface.h"
 
 void APC_Default::BeginPlay()
 {
@@ -37,6 +38,7 @@ void APC_Default::SetupInputAxis(UInputComponent* PlayerInputComponent)
 void APC_Default::SetupInputActions(UInputComponent* PlayerInputComponent)
 {
 	PlayerInputComponent->BindAction("FastMovement", IE_Released, this, &APC_Default::ReleasedW);
+	PlayerInputComponent->BindAction("TabAbility", IE_Pressed, this, &APC_Default::TabKeyAbility);
 }
 
 void APC_Default::MoveForward(float AxisValue)
@@ -93,6 +95,8 @@ void APC_Default::FastMovement()
 		Hit, ViewPointLocation, EndLocation, CollisionChannel, QueryParams);
 	if (bSuccess && Hit.Actor.IsValid())
 	{
+		PlayerCharacterPtr->SetActorLocation(Hit.Location);
+		
 		if(bIsDebugging)
 		{
 			DrawDebugSphere(
@@ -106,8 +110,14 @@ void APC_Default::FastMovement()
 			   2.f
 			   );
 		}
+	}
+}
 
-		PlayerCharacterPtr->SetActorLocation(Hit.Location);
+void APC_Default::TabKeyAbility()
+{
+	if (IsValid(PlayerCharacterPtr) && PlayerCharacterPtr->GetClass()->ImplementsInterface(UI_PlayerInputInterface::StaticClass()))
+	{
+		II_PlayerInputInterface::Execute_TabAbility(PlayerCharacterPtr);
 	}
 }
 

@@ -24,6 +24,31 @@ AC_PlayerCharacter::AC_PlayerCharacter()
 	GetMesh()->CastShadow = false;
 }
 
+void AC_PlayerCharacter::TabAbility_Implementation()
+{
+	II_PlayerInputInterface::TabAbility_Implementation();
+
+	FVector ViewPointLocation;
+	FRotator ViewPointRotation;
+	GetController()->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
+	FVector EndTrace = ViewPointLocation + ViewPointRotation.Vector() * 1000;
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	GetWorld()->LineTraceSingleByChannel(
+		Hit,
+		ViewPointLocation,
+		EndTrace,
+		ECC_Pawn,
+		Params
+	);
+
+	if (IsValid(Hit.GetActor()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[TabAbility]....Hitted...."));
+	}
+}
+
 // Called when the game starts or when spawned
 void AC_PlayerCharacter::BeginPlay()
 {

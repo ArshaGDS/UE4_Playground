@@ -60,4 +60,5 @@ private:
 	void ResetKeyPressedCount();
 	// Fast movement feature
 	void FastMovement();
+	void TabKeyAbility();
 };

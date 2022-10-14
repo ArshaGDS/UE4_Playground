@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Playground/PlayerControllers/I_PlayerInputInterface.h"
 #include "C_PlayerCharacter.generated.h"
 
 UCLASS()
-class PLAYGROUND_API AC_PlayerCharacter : public ACharacter
+class PLAYGROUND_API AC_PlayerCharacter : public ACharacter, public  II_PlayerInputInterface
 {
 	GENERATED_BODY()
 
@@ -29,6 +30,10 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Camera")
 	FVector CameraPosition = FVector(-39.56f, 1.75f, 64.f);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void TabAbility();
+	virtual void TabAbility_Implementation() override;
 	
 protected:
 	// Called when the game starts or when spawned
