@@ -31,6 +31,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Camera")
 	FVector CameraPosition = FVector(-39.56f, 1.75f, 64.f);
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Scanner")
+	float ScannerTimerRate{0.5f};
+
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void TabAbility();
 	virtual void TabAbility_Implementation() override;
@@ -42,4 +45,11 @@ protected:
 private:
 
 	bool bIsInScanMode{false};
+	float ScanCounter{0.f};
+	FTimerHandle ScanTimerHandle{};
+	FTimerDelegate ScanTimerDelegate;
+	bool bIsTimerInitialized{false};
+	
+	void InitScannerTimer();
+	void Scan();
 };

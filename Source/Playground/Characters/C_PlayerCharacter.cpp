@@ -9,6 +9,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+#define MINIMUM_RATE 0.1f
+#define MAXIMUM_RATE 1.0f
+
 // Sets default values
 AC_PlayerCharacter::AC_PlayerCharacter()
 {
@@ -30,6 +33,11 @@ AC_PlayerCharacter::AC_PlayerCharacter()
 void AC_PlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	ScanTimerDelegate.BindUObject(this, &AC_PlayerCharacter::Scan);
+	if (ScanTimerDelegate.IsBound())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Scanner]Delegate binded"));
+	}
 }
 
 // Called every frame
@@ -54,25 +62,56 @@ void AC_PlayerCharacter::TabAbility_Implementation()
 {
 	II_PlayerInputInterface::TabAbility_Implementation();
 
+	if (!IsValid(GetWorld()))
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Scanner]Can't access to UWorld global pointer."));
+		return;
+	}
+	
 	bIsInScanMode = !bIsInScanMode;
 	if (bIsInScanMode)
 	{
+		// Initialize timer
+		if (!bIsTimerInitialized) { InitScannerTimer(); }
+		// If timer is paused, unpause it
+		if (GetWorld()->GetTimerManager().IsTimerPaused(ScanTimerHandle))
+		{
+			GetWorld()->GetTimerManager().UnPauseTimer(ScanTimerHandle);
+			UE_LOG(LogTemp, Warning, TEXT("[Scanner]UnPauseTimer"));
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("[Scanner]Scan mode is On"));
+		
 		// Set outline on all enemies
 
 		// Set scan filter on camera
 	}
 	else
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[Scanner]Scan mode is Off"));
+		GetWorld()->GetTimerManager().PauseTimer(ScanTimerHandle);
 		// Delete outline on all enemies
 
 		// Delete scan filter on camera
 	}
 	
 	// Get all enemies in the world
-	TArray<AActor*> EnemiesArray;
-	UGameplayStatics::GetAllActorsOfClass(this, ACh_Enemy::StaticClass(), EnemiesArray);
+	/*TArray<AActor*> EnemiesArray;
+	UGameplayStatics::GetAllActorsOfClass(this, ACh_Enemy::StaticClass(), EnemiesArray);*/
 	// Set outline on enemy mesh
+}
 
+void AC_PlayerCharacter::InitScannerTimer()
+{
+	ScannerTimerRate = FMath::Clamp(ScannerTimerRate, MINIMUM_RATE, MAXIMUM_RATE);
+	GetWorld()->GetTimerManager().SetTimer(ScanTimerHandle, ScanTimerDelegate, ScannerTimerRate, true);
+	UE_LOG(LogTemp, Warning, TEXT("[Scanner]Scanner is initialized"));
+	bIsTimerInitialized = true;
+}
+
+void AC_PlayerCharacter::Scan()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Scanner]Scanning..."));
 	// Line trace for scan enemy 
 	FVector ViewPointLocation;
 	FRotator ViewPointRotation;
@@ -91,6 +130,6 @@ void AC_PlayerCharacter::TabAbility_Implementation()
 
 	if (IsValid(Hit.GetActor()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[TabAbility]....Hitted...."));
+		UE_LOG(LogTemp, Warning, TEXT("[Scanner]....Hitted...."));
 	}
 }

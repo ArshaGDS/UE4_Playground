@@ -41,7 +41,7 @@ private:
 	bool bIsDebugging{false};
 	
 	float RotationSpeedRef;
-	uint8 KeyPressedCount{};
+	uint8 KeyPressedCount{0};
 	FTimerHandle TimerHandle;
 	FTimerDelegate TimerDelegate;
 
