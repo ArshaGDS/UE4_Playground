@@ -24,5 +24,5 @@ class PLAYGROUND_API II_PlayerInputInterface
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void TabAbility();
+	bool ScanAbility();
 };

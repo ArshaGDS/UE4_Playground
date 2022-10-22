@@ -9,8 +9,11 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-#define MINIMUM_RATE 0.1f
-#define MAXIMUM_RATE 1.0f
+#define MINIMUM_TIMER_RATE 0.1f
+#define MAXIMUM_TIMER_RATE 1.0f
+#define SCAN_TIME_LEVEL1 3
+#define SCAN_TIME_LEVEL2 5
+#define SCAN_TIME_LEVEL3 10
 
 // Sets default values
 AC_PlayerCharacter::AC_PlayerCharacter()
@@ -34,10 +37,6 @@ void AC_PlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	ScanTimerDelegate.BindUObject(this, &AC_PlayerCharacter::Scan);
-	if (ScanTimerDelegate.IsBound())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Scanner]Delegate binded"));
-	}
 }
 
 // Called every frame
@@ -58,14 +57,12 @@ void AC_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	}
 }
 
-void AC_PlayerCharacter::TabAbility_Implementation()
+bool AC_PlayerCharacter::ScanAbility_Implementation()
 {
-	II_PlayerInputInterface::TabAbility_Implementation();
-
 	if (!IsValid(GetWorld()))
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Scanner]Can't access to UWorld global pointer."));
-		return;
+		return false; // Scanning failed
 	}
 	
 	bIsInScanMode = !bIsInScanMode;
@@ -77,49 +74,28 @@ void AC_PlayerCharacter::TabAbility_Implementation()
 		if (GetWorld()->GetTimerManager().IsTimerPaused(ScanTimerHandle))
 		{
 			GetWorld()->GetTimerManager().UnPauseTimer(ScanTimerHandle);
-			UE_LOG(LogTemp, Warning, TEXT("[Scanner]UnPauseTimer"));
 		}
-
-		UE_LOG(LogTemp, Warning, TEXT("[Scanner]Scan mode is On"));
-		
-		// Set outline on all enemies
-
-		// Set scan filter on camera
+		// TODO: Set stencil custom depth and post process
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Scanner]Scan mode is Off"));
 		GetWorld()->GetTimerManager().PauseTimer(ScanTimerHandle);
-		// Delete outline on all enemies
-
-		// Delete scan filter on camera
+		// TODO: Delete stencil custom depth and post process
 	}
-	
-	// Get all enemies in the world
-	/*TArray<AActor*> EnemiesArray;
-	UGameplayStatics::GetAllActorsOfClass(this, ACh_Enemy::StaticClass(), EnemiesArray);*/
-	// Set outline on enemy mesh
+
+	return bIsInScanMode;
 }
 
-void AC_PlayerCharacter::InitScannerTimer()
+FHitResult AC_PlayerCharacter::DrawLineTrace()
 {
-	ScannerTimerRate = FMath::Clamp(ScannerTimerRate, MINIMUM_RATE, MAXIMUM_RATE);
-	GetWorld()->GetTimerManager().SetTimer(ScanTimerHandle, ScanTimerDelegate, ScannerTimerRate, true);
-	UE_LOG(LogTemp, Warning, TEXT("[Scanner]Scanner is initialized"));
-	bIsTimerInitialized = true;
-}
-
-void AC_PlayerCharacter::Scan()
-{
-	UE_LOG(LogTemp, Warning, TEXT("[Scanner]Scanning..."));
-	// Line trace for scan enemy 
 	FVector ViewPointLocation;
 	FRotator ViewPointRotation;
 	GetController()->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
 	FVector EndTrace = ViewPointLocation + ViewPointRotation.Vector() * 1000;
-	FHitResult Hit;
+	FHitResult Hit{};
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
+
 	GetWorld()->LineTraceSingleByChannel(
 		Hit,
 		ViewPointLocation,
@@ -127,9 +103,61 @@ void AC_PlayerCharacter::Scan()
 		ECC_Pawn,
 		Params
 	);
+	
+	return Hit;
+}
 
-	if (IsValid(Hit.GetActor()))
+void AC_PlayerCharacter::InitScannerTimer()
+{
+	ScannerTimerRate = FMath::Clamp(ScannerTimerRate, MINIMUM_TIMER_RATE, MAXIMUM_TIMER_RATE);
+	GetWorld()->GetTimerManager().SetTimer(ScanTimerHandle, ScanTimerDelegate, ScannerTimerRate, true);
+	bIsTimerInitialized = true;
+}
+
+void AC_PlayerCharacter::Scan()
+{
+	const FHitResult Hit = DrawLineTrace();
+	
+	if (IsValid(Hit.GetActor()) &&
+		Hit.GetActor()->GetClass()->ImplementsInterface(UI_EnemyInteractions::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Scanner]....Hitted...."));
+		// Check if enemy already scanned, get enemy information
+		// Calculate scan time with this function => CalculateScanTime(Hit.GetActor());
+		const bool bIsAlreadyScanned = II_EnemyInteractions::Execute_GetScanStatus(Hit.GetActor());
+		if (bIsAlreadyScanned)
+		{
+			GetEnemyInformation(Hit.GetActor());
+			return;
+		}
+		
+		ScanCounter++;
+		UE_LOG(LogTemp, Display, TEXT("%i / %i"), ScanCounter, ScanTime);
+		
+		if (ScanCounter >= ScanTime)
+		{
+			// Scan completed, Call "change scan status interface" on enemy class
+			II_EnemyInteractions::Execute_SetScanStatus(Hit.GetActor(), true);
+		}
+	}
+	else if (ScanCounter > 0)
+	{
+		ScanCounter = 0;
 	}
 }
+
+void AC_PlayerCharacter::CalculateScanTime(const AActor* Actor)
+{
+	if (Actor->GetClass()->ImplementsInterface(UI_EnemyInteractions::StaticClass()))
+	{
+		uint8 EnemyLevel = II_EnemyInteractions::Execute_GetLevel(Actor);
+		int8 a = EnemyLevel - 1;
+	}
+}
+
+void AC_PlayerCharacter::GetEnemyInformation(const AActor* Actor)
+{
+	const FEnemyInformation Information = II_EnemyInteractions::Execute_GetInformation(Actor);
+	UE_LOG(LogTemp, Display, TEXT("Enemy Health: %f, Enemy Weapon: %s"), Information.Health, *Information.WeaponName);
+}
+
+

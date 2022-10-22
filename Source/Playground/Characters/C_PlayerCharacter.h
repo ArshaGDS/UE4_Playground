@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "GameFramework/Character.h"
 #include "Playground/PlayerControllers/I_PlayerInputInterface.h"
 #include "C_PlayerCharacter.generated.h"
@@ -23,20 +24,21 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Character")
-	class UCameraComponent* Camera;
+	class UCameraComponent* Camera{nullptr};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Movement")
-	float RotationSpeed = 100.f;
-	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Camera")
-	FVector CameraPosition = FVector(-39.56f, 1.75f, 64.f);
-
+	FVector CameraPosition{-39.56f, 1.75f, 64.f};
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Movement")
+	float RotationSpeed{100.f};
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Scanner")
 	float ScannerTimerRate{0.5f};
-
+	
+	// Interface
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void TabAbility();
-	virtual void TabAbility_Implementation() override;
+	bool ScanAbility();
+	virtual bool ScanAbility_Implementation() override;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -45,11 +47,15 @@ protected:
 private:
 
 	bool bIsInScanMode{false};
-	float ScanCounter{0.f};
-	FTimerHandle ScanTimerHandle{};
-	FTimerDelegate ScanTimerDelegate;
 	bool bIsTimerInitialized{false};
-	
+	uint8 ScanCounter{0};
+	uint8 ScanTime{5}; // TODO: It's just for debugging, Change it to 0 for real gameplay
+	FTimerHandle ScanTimerHandle{};
+	FTimerDelegate ScanTimerDelegate{};
+
+	FHitResult DrawLineTrace();
 	void InitScannerTimer();
 	void Scan();
+	void CalculateScanTime(const AActor* Actor);
+	void GetEnemyInformation(const AActor* Actor);
 };

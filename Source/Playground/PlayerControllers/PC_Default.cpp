@@ -6,21 +6,25 @@
 #include "GameFramework/Character.h"
 #include "DrawDebugHelpers.h"
 #include "I_PlayerInputInterface.h"
+#include "Blueprint/UserWidget.h"
 
 void APC_Default::BeginPlay()
 {
 	Super::BeginPlay();
 	// Bind ResetKeyPressedCount function to reset KeyPressedCount to zero after specific time
 	TimerDelegate.BindUObject(this, &APC_Default::ResetKeyPressedCount);
+	if (ScanUIClass != nullptr)
+	{
+		CharacterUI = CreateWidget(this, ScanUIClass);
+	}
 }
 
 // Interface
 void APC_Default::GetPlayerInputComponent_Implementation(ACharacter* PlayerCharacter,
 	UInputComponent* PlayerInputComponent, const float& RotationSpeed)
 {
-	II_PlayerInputComponent::GetPlayerInputComponent_Implementation(PlayerCharacter, PlayerInputComponent,
-	                                                                RotationSpeed);
-	RotationSpeedRef = RotationSpeed;
+	II_PlayerInputComponent::GetPlayerInputComponent_Implementation(PlayerCharacter, PlayerInputComponent, RotationSpeed);
+	RotationSpeedRef   = RotationSpeed;
 	PlayerCharacterPtr = PlayerCharacter;
 	
 	SetupInputAxis(PlayerInputComponent);
@@ -30,15 +34,15 @@ void APC_Default::GetPlayerInputComponent_Implementation(ACharacter* PlayerChara
 void APC_Default::SetupInputAxis(UInputComponent* PlayerInputComponent)
 {
 	PlayerInputComponent->BindAxis("MoveForward", this, &APC_Default::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &APC_Default::MoveRight);
-	PlayerInputComponent->BindAxis("Turn", this, &APC_Default::Turn);
-	PlayerInputComponent->BindAxis("LookUp", this, &APC_Default::LookUp);
+	PlayerInputComponent->BindAxis("MoveRight"  , this, &APC_Default::MoveRight);
+	PlayerInputComponent->BindAxis("Turn"		, this, &APC_Default::Turn);
+	PlayerInputComponent->BindAxis("LookUp"		, this, &APC_Default::LookUp);
 }
 
 void APC_Default::SetupInputActions(UInputComponent* PlayerInputComponent)
 {
-	PlayerInputComponent->BindAction("FastMovement", IE_Released, this, &APC_Default::ReleasedW);
-	PlayerInputComponent->BindAction("TabAbility", IE_Pressed, this, &APC_Default::TabKeyAbility);
+	PlayerInputComponent->BindAction("FastMovement", IE_Released, this, &APC_Default::OnWKeyReleased);
+	PlayerInputComponent->BindAction("ScanAbility" , IE_Pressed, this, &APC_Default::ScanAbility);
 }
 
 void APC_Default::MoveForward(float AxisValue)
@@ -49,7 +53,7 @@ void APC_Default::MoveForward(float AxisValue)
 	}
 }
 
-void APC_Default::ReleasedW()
+void APC_Default::OnWKeyReleased()
 {
 	// Calculates double taps on the w key in a specified time
 	if (KeyPressedCount < 2)
@@ -75,6 +79,11 @@ void APC_Default::FastMovement()
 	FRotator ViewPointRotation;
 	PlayerCharacterPtr->Controller->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
 	const FVector EndLocation = ViewPointLocation + ViewPointRotation.Vector() * LineTraceLength;
+	
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(PlayerCharacterPtr);
+	FHitResult Hit;
+	
 	if(bIsDebugging)
 	{
 		DrawDebugLine(
@@ -88,11 +97,10 @@ void APC_Default::FastMovement()
 		   4
 	   );
 	}
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(PlayerCharacterPtr);
-	FHitResult Hit;
-	const bool bSuccess = GetWorld()->LineTraceSingleByChannel(
-		Hit, ViewPointLocation, EndLocation, CollisionChannel, QueryParams);
+	
+	const bool bSuccess = GetWorld()->LineTraceSingleByChannel(Hit, ViewPointLocation, EndLocation,
+		ECC_WorldStatic, QueryParams);
+	
 	if (bSuccess && Hit.Actor.IsValid())
 	{
 		PlayerCharacterPtr->SetActorLocation(Hit.Location);
@@ -113,11 +121,19 @@ void APC_Default::FastMovement()
 	}
 }
 
-void APC_Default::TabKeyAbility()
+void APC_Default::ScanAbility()
 {
 	if (IsValid(PlayerCharacterPtr) && PlayerCharacterPtr->GetClass()->ImplementsInterface(UI_PlayerInputInterface::StaticClass()))
 	{
-		II_PlayerInputInterface::Execute_TabAbility(PlayerCharacterPtr);
+		const bool ScanStatus = II_PlayerInputInterface::Execute_ScanAbility(PlayerCharacterPtr);
+		if (ScanStatus)
+		{
+			CharacterUI->AddToViewport();
+		}
+		else
+		{
+			CharacterUI->RemoveFromViewport();
+		}
 	}
 }
 

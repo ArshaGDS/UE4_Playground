@@ -10,6 +10,7 @@
 /**
  * 
  */
+class UUserWidget;
 UCLASS()
 class PLAYGROUND_API APC_Default : public APlayerController, public II_PlayerInputComponent
 {
@@ -26,21 +27,25 @@ public:
 	void GetPlayerInputComponent(ACharacter* PlayerCharacter, UInputComponent* PlayerInputComponent, const float& RotationSpeed);
 	virtual void GetPlayerInputComponent_Implementation(ACharacter* PlayerCharacter, UInputComponent* PlayerInputComponent, const float& RotationSpeed) override;
 
-	UPROPERTY(EditDefaultsOnly, Category="Fastmove config")
-	TEnumAsByte<ECollisionChannel> CollisionChannel;
-	UPROPERTY(EditDefaultsOnly, Category="Fastmove config")
-	float LineTraceLength{100.f};
-	
 private:
+	
+	// To display debug results on screen
+	UPROPERTY(EditDefaultsOnly, Category="Controller setting | Fastmovement")
+	bool bIsDebugging{false};
 
+	UPROPERTY(EditDefaultsOnly, Category="Controller setting | Fastmovement")
+	float LineTraceLength{100.f};
+
+	UPROPERTY(EditDefaultsOnly, Category="Controller setting | Character UI")
+	TSubclassOf<UUserWidget> ScanUIClass;
+	
+	UPROPERTY(EditAnywhere)
+	UUserWidget* CharacterUI;
+private:
 	UPROPERTY()
 	ACharacter* PlayerCharacterPtr;
-
-	// To display debug results on screen
-	UPROPERTY(EditDefaultsOnly, Category="Fastmove config")
-	bool bIsDebugging{false};
 	
-	float RotationSpeedRef;
+	float RotationSpeedRef{0.f};
 	uint8 KeyPressedCount{0};
 	FTimerHandle TimerHandle;
 	FTimerDelegate TimerDelegate;
@@ -56,9 +61,9 @@ private:
 	void LookUp(float Rate);
 	
 	// Calculates double taps on the w key in a specified time
-	void ReleasedW();
+	void OnWKeyReleased();
 	void ResetKeyPressedCount();
-	// Fast movement feature
+	// Character abilities
 	void FastMovement();
-	void TabKeyAbility();
+	void ScanAbility();
 };

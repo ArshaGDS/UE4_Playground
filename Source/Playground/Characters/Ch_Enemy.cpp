@@ -32,3 +32,22 @@ void ACh_Enemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 }
 
+void ACh_Enemy::SetScanStatus_Implementation(const bool Status)
+{
+	IsScanned = Status;
+}
+
+bool ACh_Enemy::GetScanStatus_Implementation() const
+{
+	return IsScanned;
+}
+
+uint8 ACh_Enemy::GetLevel_Implementation() const
+{
+	return CharacterLevel;
+}
+
+FEnemyInformation ACh_Enemy::GetInformation_Implementation() const
+{
+	return FEnemyInformation{CharacterHealth, CharacterWeapon};
+}
