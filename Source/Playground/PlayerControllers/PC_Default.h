@@ -10,7 +10,6 @@
 /**
  * 
  */
-class UUserWidget;
 UCLASS()
 class PLAYGROUND_API APC_Default : public APlayerController, public II_PlayerInputComponent
 {
@@ -36,11 +35,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Controller setting | Fastmovement")
 	float LineTraceLength{100.f};
 
-	UPROPERTY(EditDefaultsOnly, Category="Controller setting | Character UI")
-	TSubclassOf<UUserWidget> ScanUIClass;
-	
-	UPROPERTY(EditAnywhere)
-	UUserWidget* CharacterUI;
 private:
 	UPROPERTY()
 	ACharacter* PlayerCharacterPtr;

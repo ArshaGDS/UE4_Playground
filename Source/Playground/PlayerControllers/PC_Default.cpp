@@ -6,17 +6,12 @@
 #include "GameFramework/Character.h"
 #include "DrawDebugHelpers.h"
 #include "I_PlayerInputInterface.h"
-#include "Blueprint/UserWidget.h"
 
 void APC_Default::BeginPlay()
 {
 	Super::BeginPlay();
 	// Bind ResetKeyPressedCount function to reset KeyPressedCount to zero after specific time
 	TimerDelegate.BindUObject(this, &APC_Default::ResetKeyPressedCount);
-	if (ScanUIClass != nullptr)
-	{
-		CharacterUI = CreateWidget(this, ScanUIClass);
-	}
 }
 
 // Interface
@@ -126,14 +121,6 @@ void APC_Default::ScanAbility()
 	if (IsValid(PlayerCharacterPtr) && PlayerCharacterPtr->GetClass()->ImplementsInterface(UI_PlayerInputInterface::StaticClass()))
 	{
 		const bool ScanStatus = II_PlayerInputInterface::Execute_ScanAbility(PlayerCharacterPtr);
-		if (ScanStatus)
-		{
-			CharacterUI->AddToViewport();
-		}
-		else
-		{
-			CharacterUI->RemoveFromViewport();
-		}
 	}
 }
 

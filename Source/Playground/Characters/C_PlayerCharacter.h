@@ -8,6 +8,8 @@
 #include "Playground/PlayerControllers/I_PlayerInputInterface.h"
 #include "C_PlayerCharacter.generated.h"
 
+class UUserWidget;
+
 UCLASS()
 class PLAYGROUND_API AC_PlayerCharacter : public ACharacter, public  II_PlayerInputInterface
 {
@@ -34,6 +36,15 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Scanner")
 	float ScannerTimerRate{0.5f};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Scanner")
+	FLinearColor ScanModeColor{};
+
+	UPROPERTY(EditDefaultsOnly, Category="Character | Scanner")
+	TSubclassOf<UUserWidget> ScanUIClass;
+	
+	UPROPERTY(EditAnywhere)
+	UUserWidget* CharacterUI;
 	
 	// Interface
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
@@ -49,7 +60,7 @@ private:
 	bool bIsInScanMode{false};
 	bool bIsTimerInitialized{false};
 	uint8 ScanCounter{0};
-	uint8 ScanTime{5}; // TODO: It's just for debugging, Change it to 0 for real gameplay
+	uint8 ScanTime{10}; // TODO: It's just for debugging, Change it to 0 for real gameplay
 	FTimerHandle ScanTimerHandle{};
 	FTimerDelegate ScanTimerDelegate{};
 

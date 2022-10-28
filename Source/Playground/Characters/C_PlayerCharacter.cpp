@@ -5,15 +5,15 @@
 
 #include "Ch_Enemy.h"
 #include "I_PlayerInputComponent.h"
+#include "I_UpdateScanUI.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
 
 #define MINIMUM_TIMER_RATE 0.1f
 #define MAXIMUM_TIMER_RATE 1.0f
-#define SCAN_TIME_LEVEL1 3
-#define SCAN_TIME_LEVEL2 5
-#define SCAN_TIME_LEVEL3 10
+#define PROGRESS_PERCENT(x) (x / 10.f)
 
 // Sets default values
 AC_PlayerCharacter::AC_PlayerCharacter()
@@ -37,6 +37,10 @@ void AC_PlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	ScanTimerDelegate.BindUObject(this, &AC_PlayerCharacter::Scan);
+	if (!ScanUIClass)
+	{
+		CharacterUI = CreateWidget(GetWorld()->GetFirstPlayerController(), ScanUIClass);
+	}
 }
 
 // Called every frame
@@ -65,6 +69,12 @@ bool AC_PlayerCharacter::ScanAbility_Implementation()
 		return false; // Scanning failed
 	}
 	
+	if (!CharacterUI || !CharacterUI->GetClass()->ImplementsInterface(UI_UpdateScanUI::StaticClass()))
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Scanner]Can't access to scanner UI."));
+		return;
+	}
+
 	bIsInScanMode = !bIsInScanMode;
 	if (bIsInScanMode)
 	{
@@ -75,12 +85,19 @@ bool AC_PlayerCharacter::ScanAbility_Implementation()
 		{
 			GetWorld()->GetTimerManager().UnPauseTimer(ScanTimerHandle);
 		}
-		// TODO: Set stencil custom depth and post process
+		
+		CharacterUI->AddToViewport();
+		// Turn on scan camera effect
+		Camera->PostProcessSettings.bOverride_VignetteIntensity = true;
+		Camera->PostProcessSettings.bOverride_SceneColorTint = true;
 	}
 	else
 	{
 		GetWorld()->GetTimerManager().PauseTimer(ScanTimerHandle);
-		// TODO: Delete stencil custom depth and post process
+		CharacterUI->RemoveFromViewport();
+		// Turn off scan camera effect
+		Camera->PostProcessSettings.bOverride_VignetteIntensity = false;
+		Camera->PostProcessSettings.bOverride_SceneColorTint = false;
 	}
 
 	return bIsInScanMode;
@@ -91,7 +108,7 @@ FHitResult AC_PlayerCharacter::DrawLineTrace()
 	FVector ViewPointLocation;
 	FRotator ViewPointRotation;
 	GetController()->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
-	FVector EndTrace = ViewPointLocation + ViewPointRotation.Vector() * 1000;
+	FVector EndTrace = ViewPointLocation + ViewPointRotation.Vector() * 1500;
 	FHitResult Hit{};
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
@@ -116,6 +133,7 @@ void AC_PlayerCharacter::InitScannerTimer()
 
 void AC_PlayerCharacter::Scan()
 {
+		
 	const FHitResult Hit = DrawLineTrace();
 	
 	if (IsValid(Hit.GetActor()) &&
@@ -131,17 +149,22 @@ void AC_PlayerCharacter::Scan()
 		}
 		
 		ScanCounter++;
-		UE_LOG(LogTemp, Display, TEXT("%i / %i"), ScanCounter, ScanTime);
+		II_UpdateScanUI::Execute_ScanProgress(CharacterUI, PROGRESS_PERCENT(ScanCounter));
 		
 		if (ScanCounter >= ScanTime)
 		{
 			// Scan completed, Call "change scan status interface" on enemy class
 			II_EnemyInteractions::Execute_SetScanStatus(Hit.GetActor(), true);
+			GetEnemyInformation(Hit.GetActor());
 		}
 	}
 	else if (ScanCounter > 0)
 	{
 		ScanCounter = 0;
+	}
+	else
+	{
+		II_UpdateScanUI::Execute_HideScanWidgets(CharacterUI);
 	}
 }
 
@@ -149,7 +172,7 @@ void AC_PlayerCharacter::CalculateScanTime(const AActor* Actor)
 {
 	if (Actor->GetClass()->ImplementsInterface(UI_EnemyInteractions::StaticClass()))
 	{
-		uint8 EnemyLevel = II_EnemyInteractions::Execute_GetLevel(Actor);
+		const uint8 EnemyLevel = II_EnemyInteractions::Execute_GetLevel(Actor);
 		int8 a = EnemyLevel - 1;
 	}
 }
@@ -157,7 +180,7 @@ void AC_PlayerCharacter::CalculateScanTime(const AActor* Actor)
 void AC_PlayerCharacter::GetEnemyInformation(const AActor* Actor)
 {
 	const FEnemyInformation Information = II_EnemyInteractions::Execute_GetInformation(Actor);
-	UE_LOG(LogTemp, Display, TEXT("Enemy Health: %f, Enemy Weapon: %s"), Information.Health, *Information.WeaponName);
+	II_UpdateScanUI::Execute_ScannedInformation(CharacterUI, Information.Health, Information.WeaponName);
 }
 
 

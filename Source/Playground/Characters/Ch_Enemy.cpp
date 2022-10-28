@@ -35,6 +35,10 @@ void ACh_Enemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void ACh_Enemy::SetScanStatus_Implementation(const bool Status)
 {
 	IsScanned = Status;
+	if (IsScanned)
+	{
+		GetMesh()->SetRenderCustomDepth(true);
+	}
 }
 
 bool ACh_Enemy::GetScanStatus_Implementation() const
