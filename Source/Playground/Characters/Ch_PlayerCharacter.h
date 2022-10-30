@@ -6,18 +6,18 @@
 
 #include "GameFramework/Character.h"
 #include "Playground/PlayerControllers/I_PlayerInputInterface.h"
-#include "C_PlayerCharacter.generated.h"
+#include "Ch_PlayerCharacter.generated.h"
 
 class UUserWidget;
 
 UCLASS()
-class PLAYGROUND_API AC_PlayerCharacter : public ACharacter, public  II_PlayerInputInterface
+class PLAYGROUND_API ACh_PlayerCharacter : public ACharacter, public  II_PlayerInputInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
-	AC_PlayerCharacter();
+	ACh_PlayerCharacter();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -34,39 +34,19 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Movement")
 	float RotationSpeed{100.f};
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Scanner")
-	float ScannerTimerRate{0.5f};
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character | Scanner")
-	FLinearColor ScanModeColor{};
-
-	UPROPERTY(EditDefaultsOnly, Category="Character | Scanner")
-	TSubclassOf<UUserWidget> ScanUIClass;
-	
 	UPROPERTY(EditAnywhere)
-	UUserWidget* CharacterUI;
+	class UScannerComponent* ScannerComponent;
 	
 	// Interface
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	bool ScanAbility();
-	virtual bool ScanAbility_Implementation() override;
+	void ScanAbility();
+	virtual void ScanAbility_Implementation() override;
 	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
-
-	bool bIsInScanMode{false};
-	bool bIsTimerInitialized{false};
-	uint8 ScanCounter{0};
-	uint8 ScanTime{10}; // TODO: It's just for debugging, Change it to 0 for real gameplay
-	FTimerHandle ScanTimerHandle{};
-	FTimerDelegate ScanTimerDelegate{};
-
+	
 	FHitResult DrawLineTrace();
-	void InitScannerTimer();
-	void Scan();
-	void CalculateScanTime(const AActor* Actor);
-	void GetEnemyInformation(const AActor* Actor);
 };

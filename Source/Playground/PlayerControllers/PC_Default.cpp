@@ -120,7 +120,7 @@ void APC_Default::ScanAbility()
 {
 	if (IsValid(PlayerCharacterPtr) && PlayerCharacterPtr->GetClass()->ImplementsInterface(UI_PlayerInputInterface::StaticClass()))
 	{
-		const bool ScanStatus = II_PlayerInputInterface::Execute_ScanAbility(PlayerCharacterPtr);
+		II_PlayerInputInterface::Execute_ScanAbility(PlayerCharacterPtr);
 	}
 }
 
