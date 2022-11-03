@@ -5,7 +5,6 @@
 
 #include "Ch_Enemy.h"
 #include "I_PlayerInputComponent.h"
-#include "I_UpdateScanUI.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"

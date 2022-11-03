@@ -23,6 +23,12 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category="Configuration")
 	TSubclassOf<UUserWidget> ScanUIClass{};
+
+	UPROPERTY(EditAnywhere, Category="Configuration")
+	TScriptInterface<IBlendableInterface> OutlinePP{};
+
+	UPROPERTY(EditAnywhere, Category="Configuration")
+	TScriptInterface<IBlendableInterface> HighlightPP{};
 	
 	void OnOwnerBeginPlay(ACh_PlayerCharacter* OwnerPointer);
 	void Execute();

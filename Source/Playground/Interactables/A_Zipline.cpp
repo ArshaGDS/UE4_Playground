@@ -141,6 +141,10 @@ void AA_Zipline::CreateNewSplineMesh(const uint8 SplineIndex)
 	SplineMeshComponent->RegisterComponentWithWorld(GetWorld());
 	SplineMeshComponent->AttachToComponent(Spline, FAttachmentTransformRules::KeepRelativeTransform);
 
+	// Outline scan effect
+	SplineMeshComponent->SetRenderCustomDepth(true);
+	SplineMeshComponent->SetCustomDepthStencilValue(2);
+
 	const FVector StartPoint = Spline->GetLocationAtSplinePoint(SplineIndex, ESplineCoordinateSpace::Local);
 	const FVector StartTangent = Spline->GetTangentAtSplinePoint(SplineIndex, ESplineCoordinateSpace::Local);
 	const FVector EndPoint = Spline->GetLocationAtSplinePoint(SplineIndex + 1, ESplineCoordinateSpace::Local);

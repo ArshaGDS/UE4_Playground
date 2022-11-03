@@ -8,6 +8,7 @@
 #include "Playground/Characters/Ch_PlayerCharacter.h"
 #include "Playground/Characters/I_EnemyInteractions.h"
 #include "Playground/Characters/I_UpdateScanUI.h"
+#include "Playground/Characters/Ch_Enemy.h"
 
 #define MINIMUM_TIMER_RATE 0.1f
 #define MAXIMUM_TIMER_RATE 1.0f
@@ -34,10 +35,15 @@ void UScannerComponent::OnOwnerBeginPlay(ACh_PlayerCharacter* OwnerPointer)
 	OwnerPtr = OwnerPointer;
 	// Delegate scanner timer
 	ScanTimerDelegate.BindUObject(this, &UScannerComponent::Scan);
-	// Set scanner UI class
 	if (ScanUIClass && IsValid(OwnerPtr->GetWorld()->GetFirstPlayerController()))
 	{
+		// Set scanner UI class
 		CharacterUI = CreateWidget(OwnerPtr->GetWorld()->GetFirstPlayerController(), ScanUIClass);
+	}
+	if (HighlightPP)
+	{
+		// Set highlight post process
+		OwnerPtr->Camera->PostProcessSettings.AddBlendable(HighlightPP, 1);
 	}
 }
 
@@ -52,6 +58,12 @@ void UScannerComponent::Execute()
 	if (!CharacterUI || !CharacterUI->GetClass()->ImplementsInterface(UI_UpdateScanUI::StaticClass()))
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Scanner]Can't access to scanner UI."));
+		return; // Scanning failed
+	}
+
+	if (!OutlinePP)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Scanner]Can't access to post processors."));
 		return; // Scanning failed
 	}
 
@@ -71,6 +83,8 @@ void UScannerComponent::Execute()
 		// Turn on scan camera effect
 		OwnerPtr->Camera->PostProcessSettings.bOverride_VignetteIntensity = true;
 		OwnerPtr->Camera->PostProcessSettings.bOverride_SceneColorTint = true;
+		// Set camera post process
+		OwnerPtr->Camera->PostProcessSettings.AddBlendable(OutlinePP, 1);
 	}
 	else
 	{
@@ -81,6 +95,8 @@ void UScannerComponent::Execute()
 		// Turn off scan camera effect
 		OwnerPtr->Camera->PostProcessSettings.bOverride_VignetteIntensity = false;
 		OwnerPtr->Camera->PostProcessSettings.bOverride_SceneColorTint = false;
+		// Remove camera post process
+		OwnerPtr->Camera->PostProcessSettings.RemoveBlendable(OutlinePP);
 	}
 }
 

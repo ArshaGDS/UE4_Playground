@@ -57,7 +57,7 @@ public:
 	virtual FEnemyInformation GetInformation_Implementation() const override;
 
 private:
-
+	
 	bool IsScanned{false};
 
 };
