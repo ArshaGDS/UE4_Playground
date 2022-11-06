@@ -23,7 +23,7 @@ AA_Zipline::AA_Zipline()
 void AA_Zipline::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	// We only need the tick function when the zipline is in use
 	SetActorTickEnabled(false);
 	StartZipline->OnComponentBeginOverlap.AddDynamic(this, &AA_Zipline::StartZiplineOverlapBegin);
 	if (ZiplineDirection == EZiplineDirection::OneWay)
@@ -31,7 +31,7 @@ void AA_Zipline::BeginPlay()
 		EndZipline->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		return;
 	}
-	// EndZipline overlap is set when the zipline is two-way
+	// If we are going to have a two-way zip line
 	EndZipline->OnComponentBeginOverlap.AddDynamic(this, &AA_Zipline::EndZiplineOverlapBegin);
 }	
 
@@ -39,14 +39,15 @@ void AA_Zipline::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	if (SplineMesh != nullptr)
+	if (SplineMesh)
 	{
+		// Creates a spline mesh along the spline
 		for (uint8 SplineIndex{}; SplineIndex <= LastSplinePointIndex(); SplineIndex++)
 		{
 			CreateNewSplineMesh(SplineIndex);
 		}
 	}
-	
+	// Sets the collision box size
 	StartZipline->SetBoxExtent(BoxExtent);
 	EndZipline->SetBoxExtent(BoxExtent);
 	

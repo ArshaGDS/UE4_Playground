@@ -10,6 +10,7 @@
 #include "Playground/Characters/I_UpdateScanUI.h"
 #include "Playground/Characters/Ch_Enemy.h"
 
+#define BLENDABLE_WEIGHT 1
 #define MINIMUM_TIMER_RATE 0.1f
 #define MAXIMUM_TIMER_RATE 1.0f
 #define PROGRESS_PERCENT(x) (x / 10.f)
@@ -43,7 +44,7 @@ void UScannerComponent::OnOwnerBeginPlay(ACh_PlayerCharacter* OwnerPointer)
 	if (HighlightPP)
 	{
 		// Set highlight post process
-		OwnerPtr->Camera->PostProcessSettings.AddBlendable(HighlightPP, 1);
+		OwnerPtr->Camera->PostProcessSettings.AddBlendable(HighlightPP, BLENDABLE_WEIGHT);
 	}
 }
 
@@ -84,7 +85,7 @@ void UScannerComponent::Execute()
 		OwnerPtr->Camera->PostProcessSettings.bOverride_VignetteIntensity = true;
 		OwnerPtr->Camera->PostProcessSettings.bOverride_SceneColorTint = true;
 		// Set camera post process
-		OwnerPtr->Camera->PostProcessSettings.AddBlendable(OutlinePP, 1);
+		OwnerPtr->Camera->PostProcessSettings.AddBlendable(OutlinePP, BLENDABLE_WEIGHT);
 	}
 	else
 	{
@@ -115,7 +116,6 @@ void UScannerComponent::Scan()
 		Hit.GetActor()->GetClass()->ImplementsInterface(UI_EnemyInteractions::StaticClass()))
 	{
 		// Check if enemy already scanned, get enemy information
-		// Calculate scan time with this function => CalculateScanTime(Hit.GetActor());
 		const bool bIsAlreadyScanned = II_EnemyInteractions::Execute_GetScanStatus(Hit.GetActor());
 		if (bIsAlreadyScanned)
 		{
@@ -139,7 +139,7 @@ void UScannerComponent::Scan()
 	}
 	else
 	{
-		II_UpdateScanUI::Execute_HideScanWidgets(CharacterUI);
+		II_UpdateScanUI::Execute_HideScannerWidgets(CharacterUI);
 	}
 }
 
@@ -147,7 +147,7 @@ FHitResult UScannerComponent::DrawLineTrace()
 {
 	FVector ViewPointLocation;
 	FRotator ViewPointRotation;
-	OwnerPtr->GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
+	OwnerPtr->GetController()->GetPlayerViewPoint(ViewPointLocation, ViewPointRotation);
 	FVector EndTrace = ViewPointLocation + ViewPointRotation.Vector() * 1500;
 	FHitResult Hit{};
 	FCollisionQueryParams Params;

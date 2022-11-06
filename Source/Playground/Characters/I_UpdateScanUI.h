@@ -30,5 +30,5 @@ public:
 	void ScannedInformation(const uint8 Health, const FString& WeaponName);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void HideScanWidgets();
+	void HideScannerWidgets();
 };

@@ -4,7 +4,7 @@
 #include "Ch_Enemy.h"
 #include "Components/PostProcessComponent.h"
 
-#define BLENDABLE_WEIGHT 1
+#define HIGHLIGHT_DEPTH_VALUE 4
 
 // Sets default values
 ACh_Enemy::ACh_Enemy()
@@ -37,7 +37,7 @@ void ACh_Enemy::SetScanStatus_Implementation(const bool Status)
 	IsScanned = Status;
 	if (IsScanned)
 	{
-		GetMesh()->SetCustomDepthStencilValue(4);
+		GetMesh()->SetCustomDepthStencilValue(HIGHLIGHT_DEPTH_VALUE);
 	}
 }
 // Interface

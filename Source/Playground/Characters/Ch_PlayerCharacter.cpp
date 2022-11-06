@@ -52,11 +52,10 @@ void ACh_PlayerCharacter::Tick(float DeltaTime)
 void ACh_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	if (IsValid(GetWorld()->GetFirstPlayerController()) &&
-			GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UI_PlayerInputComponent::StaticClass()))
+	if (IsValid(GetController()) &&
+			GetController()->GetClass()->ImplementsInterface(UI_PlayerInputComponent::StaticClass()))
 	{
-		II_PlayerInputComponent::Execute_GetPlayerInputComponent(GetWorld()->GetFirstPlayerController(), this,
-			PlayerInputComponent, RotationSpeed);
+		II_PlayerInputComponent::Execute_GetPlayerInputComponent(GetController(), this, PlayerInputComponent, RotationSpeed);
 	}
 }
 
