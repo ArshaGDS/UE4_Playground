@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "I_SecuritycameraInteractions.h"
 #include "GameFramework/Pawn.h"
 #include "P_SecurityCamera.generated.h"
 
 UCLASS()
-class PLAYGROUND_API AP_SecurityCamera : public APawn
+class PLAYGROUND_API AP_SecurityCamera : public APawn, public II_SecuritycameraInteractions
 {
 	GENERATED_BODY()
 
@@ -27,7 +28,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-
+	
+	// Interface
+	virtual void StopInvestigation() override;
+	// Interface
+	virtual void RestartInvestigation() override;
+	
 	UPROPERTY(EditAnywhere, Category = "Camera Rotation")
 	UStaticMeshComponent* CameraMesh{};
 	

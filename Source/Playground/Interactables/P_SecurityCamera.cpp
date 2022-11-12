@@ -3,7 +3,6 @@
 
 #include "P_SecurityCamera.h"
 
-#include "Components/SphereComponent.h"
 #include "GameFramework/RotatingMovementComponent.h"
 
 // Sets default values
@@ -45,13 +44,27 @@ void AP_SecurityCamera::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
+// Interface
+void AP_SecurityCamera::StopInvestigation()
+{
+	II_SecuritycameraInteractions::StopInvestigation();
+	CameraMovement->Deactivate();
+	SetActorTickEnabled(false);
+}
+// Interface
+void AP_SecurityCamera::RestartInvestigation()
+{
+	II_SecuritycameraInteractions::RestartInvestigation();
+	CameraMovement->Activate();
+	SetActorTickEnabled(true);
+}
 
 void AP_SecurityCamera::Investigating()
 {
 	const float CurrentYaw = GetActorRotation().Yaw;
 	if (CurrentYaw >= MaximumRotationToLeft || CurrentYaw <= MaximumRotationToRight)
 	{
-		UE_LOG(LogTemp, Display, TEXT("[SecurityCamera]CurrentYaw: %f"), CurrentYaw);
+		// Change movement direction
 		CameraMovement->RotationRate.Yaw *= -1;
 	}
 }
