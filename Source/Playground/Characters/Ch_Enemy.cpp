@@ -4,6 +4,7 @@
 #include "Ch_Enemy.h"
 #include "Components/PostProcessComponent.h"
 
+#define OUTLINE_DEPTH_VALUE 1
 #define HIGHLIGHT_DEPTH_VALUE 4
 
 // Sets default values
@@ -11,6 +12,11 @@ ACh_Enemy::ACh_Enemy()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+    if (GetMesh())
+    {
+	    GetMesh()->bRenderCustomDepth = true;
+    	GetMesh()->SetCustomDepthStencilValue(OUTLINE_DEPTH_VALUE);
+    }
 }
 
 // Called when the game starts or when spawned

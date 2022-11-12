@@ -27,27 +27,37 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// Interface
+	virtual void StopRotation_Implementation() override;
+	
+	// Interface
+	virtual void ResumeRotation_Implementation() override;
+
 private:
-	
-	// Interface
-	virtual void StopInvestigation() override;
-	// Interface
-	virtual void RestartInvestigation() override;
-	
-	UPROPERTY(EditAnywhere, Category = "Camera Rotation")
+
+	UPROPERTY()
 	UStaticMeshComponent* CameraMesh{};
 	
 	UPROPERTY()
-	class URotatingMovementComponent* CameraMovement{};
+	class URotatingMovementComponent* RotationComponent{};
 	
 	UPROPERTY(EditAnywhere, Category = "Camera Rotation")
 	float Degree{70};
-	UPROPERTY(EditAnywhere, Category = "Camera Rotation")
-	float YawDirection{100};
 	
-	float MaximumRotationToLeft{};
-	float MaximumRotationToRight{};
+	UPROPERTY(EditAnywhere, Category = "Camera Rotation")
+	float Rate{100};
+
+	float CurrentYaw{};
+	FRotator InitialRotation{};
+	FTimerHandle TimerHandle{};
 	
 	void Investigating();
-	
+	void RotateToInitialRotation();
+	/**
+	 * This function checks the current grade is within a certain range.
+	 * @param Value Current yaw 
+	 * @param Central Initial yaw
+	 * @param Range Rotation degree
+	 */
+	bool IsAngleInRange(const float Value, const float Central, const float Range);
 };

@@ -23,6 +23,9 @@ class PLAYGROUND_API II_SecuritycameraInteractions
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	
-	virtual void StopInvestigation();
-	virtual void RestartInvestigation();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void StopRotation();
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void ResumeRotation();
 };
