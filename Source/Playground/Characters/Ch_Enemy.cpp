@@ -6,12 +6,15 @@
 
 #define OUTLINE_DEPTH_VALUE 1
 #define HIGHLIGHT_DEPTH_VALUE 4
+#define ALL_ENEMIES_TEAM_ID 2
 
 // Sets default values
 ACh_Enemy::ACh_Enemy()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+	TeamId = ALL_ENEMIES_TEAM_ID;
+	
     if (GetMesh())
     {
 	    GetMesh()->bRenderCustomDepth = true;

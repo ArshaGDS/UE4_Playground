@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Ch_CharacterBase.h"
 
 #include "GameFramework/Character.h"
 #include "Playground/PlayerControllers/I_PlayerInputInterface.h"
@@ -11,7 +12,7 @@
 class UUserWidget;
 
 UCLASS()
-class PLAYGROUND_API ACh_PlayerCharacter : public ACharacter, public  II_PlayerInputInterface
+class PLAYGROUND_API ACh_PlayerCharacter : public ACh_CharacterBase, public  II_PlayerInputInterface
 {
 	GENERATED_BODY()
 
@@ -38,8 +39,6 @@ public:
 	class UScannerComponent* ScannerComponent;
 	
 	// Interface
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void ScanAbility();
 	virtual void ScanAbility_Implementation() override;
 	
 protected:

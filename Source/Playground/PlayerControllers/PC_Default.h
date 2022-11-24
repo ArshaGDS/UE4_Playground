@@ -22,8 +22,6 @@ protected:
 public:
 
 	// Interface
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void GetPlayerInputComponent(ACharacter* PlayerCharacter, UInputComponent* PlayerInputComponent, const float& RotationSpeed);
 	virtual void GetPlayerInputComponent_Implementation(ACharacter* PlayerCharacter, UInputComponent* PlayerInputComponent, const float& RotationSpeed) override;
 
 private:

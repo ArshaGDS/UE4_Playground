@@ -49,15 +49,21 @@ private:
 
 	float CurrentYaw{};
 	FRotator InitialRotation{};
-	FTimerHandle TimerHandle{};
+
+	// DEBUG
+	UPROPERTY(EditAnywhere, Category= "Camera Rotation")
+	bool bShowDebugMsg{false};
+	bool bIsLastAngleInRange{true};
 	
 	void Investigating();
-	void RotateToInitialRotation();
 	/**
 	 * This function checks the current grade is within a certain range.
 	 * @param Value Current yaw 
 	 * @param Central Initial yaw
 	 * @param Range Rotation degree
 	 */
-	bool IsAngleInRange(const float Value, const float Central, const float Range);
+	bool IsAngleInRange(const float Value, const float Central, const float Range) const;
+	void SetYawRotationRate(const float RotationRate) const;
+	void ReverseTheRotation() const;
+	void SetRotationActivityState(bool State) const;
 };

@@ -18,22 +18,35 @@ void AAIC_SecurityCamera::BeginPlay()
 
 AAIC_SecurityCamera::AAIC_SecurityCamera()
 {
-	CameraPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception Component"));
 	// Configure AI sight
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));
-	SightConfig->SightRadius = DEFAULT_SIGHT_RADIUS;
-	SightConfig->LoseSightRadius = DEFAULT_LOSE_SIGHT_RADIUS;
-	SightConfig->PeripheralVisionAngleDegrees = DEFAULT_PERIPHERAL_VISION_ANGLE_DEGREES;
-	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	if (ensureMsgf(SightConfig, TEXT("[AIC_SecCamera]Can't access to SightConfig")))
+	{
+		SightConfig->SightRadius = DEFAULT_SIGHT_RADIUS;
+		SightConfig->LoseSightRadius = DEFAULT_LOSE_SIGHT_RADIUS;
+		SightConfig->PeripheralVisionAngleDegrees = DEFAULT_PERIPHERAL_VISION_ANGLE_DEGREES;
+		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+	}
+
+	CameraPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception Component"));
 	// Set configuration
-	CameraPerception->ConfigureSense(*SightConfig);
-	CameraPerception->SetDominantSense(SightConfig->GetSenseImplementation());
+	if (ensureMsgf(CameraPerception, TEXT("[AIC_SecCamera]Can't access to CameraPerception")))
+	{
+		CameraPerception->ConfigureSense(*SightConfig);
+		CameraPerception->SetDominantSense(SightConfig->GetSenseImplementation());
+	}
+}
+
+ETeamAttitude::Type AAIC_SecurityCamera::GetTeamAttitudeTowards(const AActor& Other) const
+{
+	const IGenericTeamAgentInterface* OtherTeamAgent = Cast<const IGenericTeamAgentInterface>(&Other);
+	return OtherTeamAgent ? FGenericTeamId::GetAttitude(GetGenericTeamId(), OtherTeamAgent->GetGenericTeamId())
+		: ETeamAttitude::Hostile;
 }
 
 void AAIC_SecurityCamera::OnPerception(AActor* Actor, FAIStimulus Stimulus)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("[SecurityCamera]OnTargetPerceptionUpdated"));
-	if (!Stimulus.WasSuccessfullySensed())
+	if (!Stimulus.WasSuccessfullySensed() && GetPawn())
 	{
 		// If lose sight
 		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Red, TEXT("Losed sight"));
@@ -42,7 +55,7 @@ void AAIC_SecurityCamera::OnPerception(AActor* Actor, FAIStimulus Stimulus)
 		return;
 	}
 	
-	if (IsValid(Actor) && GetPawn()->GetClass()->ImplementsInterface(UI_SecuritycameraInteractions::StaticClass()))
+	if (IsValid(Actor) && GetPawn() && GetPawn()->GetClass()->ImplementsInterface(UI_SecuritycameraInteractions::StaticClass()))
 	{
 		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Black, TEXT("Player detected"));
 		II_SecuritycameraInteractions::Execute_StopRotation(GetPawn());
@@ -54,4 +67,10 @@ void AAIC_SecurityCamera::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	CameraPerception->OnTargetPerceptionUpdated.AddDynamic(this, &AAIC_SecurityCamera::OnPerception);
+}
+
+FGenericTeamId AAIC_SecurityCamera::GetGenericTeamId() const
+{
+	const FGenericTeamId GenericTeamId(TeamId);
+	return GenericTeamId;
 }

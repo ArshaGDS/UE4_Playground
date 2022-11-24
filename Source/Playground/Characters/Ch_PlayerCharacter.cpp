@@ -14,12 +14,13 @@
 #define MINIMUM_TIMER_RATE 0.1f
 #define MAXIMUM_TIMER_RATE 1.0f
 #define PROGRESS_PERCENT(x) (x / 10.f)
-
+#define PLAYER_AND_TEAMMATES_TEAM_ID 1
 // Sets default values
 ACh_PlayerCharacter::ACh_PlayerCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	TeamId = PLAYER_AND_TEAMMATES_TEAM_ID;
 	
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->bUsePawnControlRotation = true;

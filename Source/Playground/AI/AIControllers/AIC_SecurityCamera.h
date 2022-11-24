@@ -7,6 +7,8 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "AIC_SecurityCamera.generated.h"
 
+#define ALL_ENEMIES_TEAM_ID 2
+
 /**
  * 
  */
@@ -21,6 +23,9 @@ protected:
 	UAIPerceptionComponent* CameraPerception{};
 	
 	virtual void BeginPlay() override;
+
+	int TeamId{ALL_ENEMIES_TEAM_ID};
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 	
 public:
 	
@@ -33,4 +38,5 @@ public:
 	void OnPerception(AActor* Actor, FAIStimulus Stimulus);
 	
 	virtual void OnPossess(APawn* InPawn) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
 };
